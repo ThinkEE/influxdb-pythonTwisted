@@ -32,7 +32,7 @@ from resultset import ResultSet
 
 class InfluxDBClient(object):
 
-    def __init__(self, reactor, config):
+    def __init__(self, config):
         self._host = config["host"] if "host" in config else "localhost"
         self._port = int(config["port"]) if "port" in config else 8086
         self._username = config["username"] if "username" in config else "root"
@@ -287,7 +287,7 @@ class InfluxDBClient(object):
         :param dbname: the name of the database to create
         :type dbname: str
         """
-        yield self.query("CREATE DATABASE {0}".format(quote_ident(dbname)))
+        yield self.rawQuery("CREATE DATABASE {0}".format(quote_ident(dbname)))
 
     @inlineCallbacks
     def drop_database(self, dbname):
@@ -295,7 +295,7 @@ class InfluxDBClient(object):
         :param dbname: the name of the database to drop
         :type dbname: str
         """
-        yield self.query("DROP DATABASE {0}".format(quote_ident(dbname)))
+        yield self.rawQuery("DROP DATABASE {0}".format(quote_ident(dbname)))
 
     @inlineCallbacks
     def create_retention_policy(self, name, duration, replication,
@@ -328,7 +328,7 @@ class InfluxDBClient(object):
         if default is True:
             query_string += " DEFAULT"
 
-        yield self.query(query_string)
+        yield self.rawQuery(query_string)
 
     @inlineCallbacks
     def rawQuery(self, query,

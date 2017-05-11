@@ -61,7 +61,7 @@ def run():
     #  config["proxies"] = ""
 
     # Creates a Influxdb client
-    client = InfluxDBClient(reactor, config)
+    client = InfluxDBClient(config)
     print("INFO: Client Created")
 
     statement = [
