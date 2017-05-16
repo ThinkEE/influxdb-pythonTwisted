@@ -23,7 +23,7 @@
 # SOFTWARE.
 ################################################################################
 
-import json, treq
+import json
 
 from twisted.internet.defer import inlineCallbacks, returnValue, DeferredList
 
@@ -33,6 +33,8 @@ from resultset import ResultSet
 class InfluxDBClient(object):
 
     def __init__(self, config):
+        import treq
+        self.treq = treq
         self._host = config["host"] if "host" in config else "localhost"
         self._port = int(config["port"]) if "port" in config else 8086
         self._username = config["username"] if "username" in config else "root"
@@ -110,15 +112,15 @@ class InfluxDBClient(object):
 
         for _try in range(0, self._retries):
             try:
-                response = yield treq.request( method=method,
-                                                url=url,
-                                                auth=(self._username, self._password),
-                                                params=params,
-                                                data=data,
-                                                headers=headers,
-                                                proxies=self._proxies,
-                                                verify=self._verify_ssl,
-                                                timeout=self._timeout)
+                response = yield self.treq.request( method=method,
+                                                    url=url,
+                                                    auth=(self._username, self._password),
+                                                    params=params,
+                                                    data=data,
+                                                    headers=headers,
+                                                    proxies=self._proxies,
+                                                    verify=self._verify_ssl,
+                                                    timeout=self._timeout)
                 break
             except:
                 print("ERROR: Connection error while sending request")
