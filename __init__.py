@@ -22,4 +22,4 @@
 # SOFTWARE.
 ################################################################################
 
-from modules.client import InfluxDBClient
+INFLUX_DB = "influxdb"
