@@ -63,7 +63,7 @@ class InfluxDBClient(object):
                                                 self._port)
 
     @inlineCallbacks
-    def request(self, url, method='GET', expected_response_code=200, headers=None):
+    def request(self, url, data=None, method='GET', expected_response_code=200, headers=None):
         """
             Make a HTTP request to the InfluxDB API.
             :param url: the path of the HTTP request, e.g. write, query, etc.
@@ -85,16 +85,20 @@ class InfluxDBClient(object):
                 response = yield self.treq.request( method=method,
                                                     url=url,
                                                     headers=headers,
+                                                    data=data,
                                                     proxies=self._proxies,
                                                     verify=self._verify_ssl,
                                                     timeout=self._timeout)
                 break
-            except:
+            except Exception as err:
+                print(err)
                 print("ERROR: Connection error while sending request")
                 response = None
 
         if response:
-            if 500 <= response.code < 600:
+            if 400 <= response.code < 500:
+                print("ERROR: InfluxDB could not understand the request. Error code: {0}".format(response.code))
+            elif 500 <= response.code < 600:
                 err = yield response.json()
                 print("ERROR: %s"%(err))
                 response = None
@@ -106,6 +110,31 @@ class InfluxDBClient(object):
                 response = None
 
         returnValue(response)
+
+    @inlineCallbacks
+    def query(self, query, parsed=True, params=None, expected_response_code=200):
+
+        query_url = "query?db={0}&u={1}&p={2}&q={3}".format(self._database, self._username, self._password, query.replace(" ", "+"))
+
+        response = yield self.request(url=query_url, expected_response_code=expected_response_code)
+
+        if response:
+            data = yield response.json()
+        else:
+            data = {u'results': []}
+
+        if parsed:
+            data = [ ResultSet(result) for result in data.get('results', [])]
+
+        returnValue(data)
+
+    @inlineCallbacks
+    def write(self, data, expected_response_code=204):
+        url = "write?db={0}&u={1}&p={2}".format(self._database, self._username, self._password)
+        data = make_lines(data).encode("utf-8")
+
+        response = yield self.request(url=url, data=data, method="POST", expected_response_code=expected_response_code)
+        returnValue(True)
 
     # @inlineCallbacks
     # def write(self, data, params=None, expected_response_code=204, protocol='json'):
@@ -298,20 +327,3 @@ class InfluxDBClient(object):
     #         query_string += " DEFAULT"
     #
     #     yield self.rawQuery(query_string)
-
-    @inlineCallbacks
-    def query(self, query, parsed=True, params=None, expected_response_code=200):
-
-        query_url = "query?db={0}&u={1}&p={2}&q={3}".format(self._database, self._username, self._password, query.replace(" ", "+"))
-
-        response = yield self.request(url=query_url, expected_response_code=expected_response_code)
-
-        if response:
-            data = yield response.json()
-        else:
-            data = {u'results': []}
-
-        if parsed:
-            data = [ ResultSet(result) for result in data.get('results', [])]
-
-        returnValue(data)
