@@ -98,15 +98,17 @@ class InfluxDBClient(object):
         if response:
             if 400 <= response.code < 500:
                 print("ERROR: InfluxDB could not understand the request. Error code: {0}".format(response.code))
+                err = yield response.json()
+                print("ERROR: {0}".format(err))
             elif 500 <= response.code < 600:
                 err = yield response.json()
-                print("ERROR: %s"%(err))
+                print("ERROR: {0}".format(err))
                 response = None
             elif response.code == expected_response_code:
                 returnValue(response)
             else:
                 err = yield response.json()
-                print("ERROR: %s"%(err))
+                print("ERROR: {0}".format(err))
                 response = None
 
         returnValue(response)
