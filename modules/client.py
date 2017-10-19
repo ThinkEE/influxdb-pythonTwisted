@@ -131,10 +131,13 @@ class InfluxDBClient(object):
         returnValue(data)
 
     @inlineCallbacks
-    def write(self, data, expected_response_code=204):
-        url = "write?db={0}&u={1}&p={2}".format(self._database, self._username, self._password)
-        data = make_lines(data).encode("utf-8")
+    def write(self, data, rp=None, expected_response_code=204):
+        url = ("write?db={0}&u={1}&p={2}"
+              .format(self._database, self._username, self._password))
+        if rp:
+            url += "&rp={0}".format(rp)
 
+        data = make_lines(data).encode("utf-8")
         response = yield self.request(url=url, data=data, method="POST", expected_response_code=expected_response_code)
         returnValue(True)
 
